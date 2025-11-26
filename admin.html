@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Acres - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .custom-domain-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .custom-domain-group input[type="text"] {
+            flex: 1;
+        }
+
+        .custom-domain-group span {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.95em;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .example strong {
+            color: #333;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌲 Principal Acres</h1>
+        <p class="subtitle">Admin Portal - Configure Land Boundaries</p>
+
+        <form id="landForm">
+            <div class="form-group">
+                <label for="landUrl">Land ID URL</label>
+                <input 
+                    type="text" 
+                    id="landUrl" 
+                    name="landUrl" 
+                    placeholder="https://id.land/maps/..." 
+                    required
+                />
+                <div class="example">
+                    <strong>Example:</strong><br>
+                    https://id.land/maps/db72d71ef72e192c30e66256e0cf6fc5/share
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="customDomain">Custom Subdomain (optional)</label>
+                <div class="custom-domain-group">
+                    <input 
+                        type="text" 
+                        id="customDomain" 
+                        name="customDomain" 
+                        placeholder="e.g., julie"
+                    />
+                    <span>.land</span>
+                </div>
+                <div class="example">
+                    <strong>Note:</strong> If provided, the client will access the map at [subdomain].land instead of id.land
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                Validate & Generate Client Link
+            </button>
+        </form>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('landForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('status');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const landUrl = document.getElementById('landUrl').value.trim();
+            const customDomain = document.getElementById('customDomain').value.trim();
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span>Processing...';
+            statusDiv.className = 'status';
+            statusDiv.style.display = 'none';
+
+            try {
+                // Extract the map ID from the URL
+                const urlMatch = landUrl.match(/maps\/([a-f0-9]+)\/share/);
+                if (!urlMatch) {
+                    throw new Error('Invalid URL format. Please provide a valid land ID URL.');
+                }
+
+                const mapId = urlMatch[1];
+                
+                // Construct the API URL
+                const apiUrl = `https://api.id.land/maps/${mapId}/share`;
+
+                showStatus('info', 'Validating URL and fetching data...');
+
+                // Fetch the data from the API
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data from API (Status: ${response.status})`);
+                }
+
+                const data = await response.json();
+
+                // Validate that we have geoJSON data
+                if (!data.geoJSON || data.geoJSON.length === 0) {
+                    throw new Error('No polygon data found in the response.');
+                }
+
+                // Extract polygon coordinates
+                const polygons = data.geoJSON.filter(feature => 
+                    feature.geometry && feature.geometry.type === 'Polygon'
+                );
+
+                if (polygons.length === 0) {
+                    throw new Error('No valid polygons found in the geoJSON data.');
+                }
+
+                // Store the data for the client
+                const clientData = {
+                    mapId: mapId,
+                    name: data.name || 'Unnamed Property',
+                    state: data.state || '',
+                    polygons: polygons.map(p => p.geometry.coordinates),
+                    creator: data.creator || null,
+                    customDomain: customDomain || null,
+                    originalUrl: landUrl
+                };
+
+                localStorage.setItem('landData', JSON.stringify(clientData));
+
+                // Generate client URL
+                const clientUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', 'client.html')}?map=${mapId}`;
+
+                showStatus('success', `
+                    <strong>✓ Success!</strong><br><br>
+                    <strong>Property:</strong> ${clientData.name}${clientData.state ? ` (${clientData.state})` : ''}<br>
+                    <strong>Polygons found:</strong> ${polygons.length}<br><br>
+                    <a href="${clientUrl}" style="color: inherit; text-decoration: underline;">
+                        Click here to view on map →
+                    </a>
+                `);
+
+            } catch (error) {
+                showStatus('error', `<strong>✗ Error:</strong> ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Validate & Generate Client Link';
+            }
+        });
+
+        function showStatus(type, message) {
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

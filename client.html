@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Acres - Property Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .info-panel h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .info-panel .detail {
+            margin: 8px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .info-panel .detail strong {
+            color: #333;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            color: white;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            text-align: center;
+            z-index: 10000;
+        }
+
+        .error-message h2 {
+            color: #d9534f;
+            margin-bottom: 15px;
+        }
+
+        .error-message p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .error-message a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .location-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: white;
+            border: 2px solid #667eea;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }
+
+        .location-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Map Style Switcher */
+        .map-style-switcher {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .style-switcher-header {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .style-switcher-header:hover {
+            opacity: 0.9;
+        }
+
+        .style-switcher-toggle {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .style-switcher-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .style-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .style-options.open {
+            max-height: 500px;
+        }
+
+        .style-option {
+            padding: 0;
+            border: none;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .style-option:hover {
+            background: #f8f9fa;
+        }
+
+        .style-option.active {
+            background: #e8ecff;
+        }
+
+        .style-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #667eea;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .style-preview {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .style-label {
+            padding: 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .map-style-switcher {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+
+            .info-panel {
+                top: 10px;
+                right: 10px;
+                max-width: 250px;
+            }
+        }
+
+        /* Leaflet popup styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+
+        .leaflet-popup-content {
+            margin: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading property data...</div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Map Style Switcher -->
+    <div class="map-style-switcher">
+        <div class="style-switcher-header" onclick="toggleStyleSwitcher()">
+            <span>🗺️ Map Style</span>
+            <span class="style-switcher-toggle" id="styleSwitcherToggle">▼</span>
+        </div>
+        <div class="style-options" id="styleOptions">
+            <button class="style-option active" data-style="streets" onclick="changeMapStyle('streets')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="#f0f0f0" width="100" height="100"/>
+                    <path fill="#fff" d="M10,30 h80 M30,10 v80 M50,20 h40 M20,50 h60 M40,70 h50"/>
+                    <line x1="10" y1="30" x2="90" y2="30" stroke="#ddd" stroke-width="8"/>
+                    <line x1="30" y1="10" x2="30" y2="90" stroke="#ddd" stroke-width="6"/>
+                    <line x1="50" y1="20" x2="90" y2="20" stroke="#eee" stroke-width="4"/>
+                    <circle cx="30" cy="30" r="4" fill="#667eea"/>
+                </svg>
+                <div class="style-label">Streets</div>
+            </button>
+            <button class="style-option" data-style="satellite" onclick="changeMapStyle('satellite')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="sat" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <rect fill="#3a5a40" width="20" height="20"/>
+                            <circle cx="5" cy="5" r="2" fill="#588157"/>
+                            <circle cx="15" cy="15" r="3" fill="#6a994e"/>
+                        </pattern>
+                    </defs>
+                    <rect fill="url(#sat)" width="100" height="100"/>
+                    <path fill="#a3b18a" opacity="0.5" d="M20,60 Q40,50 60,60 T100,60 V100 H0 Z"/>
+                </svg>
+                <div class="style-label">Satellite</div>
+            </button>
+            <button class="style-option" data-style="terrain" onclick="changeMapStyle('terrain')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="#e8ddb5" width="100" height="100"/>
+                    <path fill="#c9b896" d="M0,70 L20,50 L40,60 L60,40 L80,55 L100,45 V100 H0 Z"/>
+                    <path fill="#a89968" d="M0,80 L25,65 L50,75 L75,60 L100,70 V100 H0 Z"/>
+                    <path fill="#8b7355" d="M30,100 L35,85 L45,90 L50,80 L60,95 L65,100 Z"/>
+                </svg>
+                <div class="style-label">Terrain</div>
+            </button>
+            <button class="style-option" data-style="topo" onclick="changeMapStyle('topo')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="#faf9f6" width="100" height="100"/>
+                    <ellipse cx="50" cy="50" rx="40" ry="35" fill="none" stroke="#c8a882" stroke-width="1"/>
+                    <ellipse cx="50" cy="50" rx="30" ry="25" fill="none" stroke="#b89968" stroke-width="1"/>
+                    <ellipse cx="50" cy="50" rx="20" ry="15" fill="none" stroke="#a88850" stroke-width="1"/>
+                    <ellipse cx="50" cy="50" rx="10" ry="8" fill="none" stroke="#8b7355" stroke-width="1.5"/>
+                    <text x="50" y="55" text-anchor="middle" font-size="8" fill="#666">500</text>
+                </svg>
+                <div class="style-label">Topographic</div>
+            </button>
+            <button class="style-option" data-style="dark" onclick="changeMapStyle('dark')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="#1a1a1a" width="100" height="100"/>
+                    <line x1="10" y1="30" x2="90" y2="30" stroke="#444" stroke-width="6"/>
+                    <line x1="30" y1="10" x2="30" y2="90" stroke="#444" stroke-width="4"/>
+                    <line x1="50" y1="20" x2="90" y2="20" stroke="#333" stroke-width="3"/>
+                    <circle cx="30" cy="30" r="4" fill="#667eea"/>
+                    <rect fill="#2a2a2a" x="40" y="40" width="15" height="15"/>
+                    <rect fill="#2a2a2a" x="60" y="50" width="20" height="20"/>
+                </svg>
+                <div class="style-label">Dark</div>
+            </button>
+            <button class="style-option" data-style="outdoors" onclick="changeMapStyle('outdoors')">
+                <svg class="style-preview" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="#e8f4ea" width="100" height="100"/>
+                    <path fill="#a8d5ba" d="M0,60 Q30,40 60,60 T100,50 V100 H0 Z"/>
+                    <circle cx="20" cy="20" r="8" fill="#f4a460" opacity="0.8"/>
+                    <path fill="#52796f" d="M40,70 L45,60 L50,70 Z"/>
+                    <path fill="#52796f" d="M70,65 L77,50 L84,65 Z"/>
+                    <path stroke="#84a98c" stroke-width="2" fill="none" d="M10,80 Q30,70 50,80 T90,75"/>
+                </svg>
+                <div class="style-label">Outdoors</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel" style="display: none;">
+        <h2 id="propertyName">Property</h2>
+        <div class="detail"><strong>State:</strong> <span id="propertyState">-</span></div>
+        <div class="detail"><strong>Polygons:</strong> <span id="polygonCount">0</span></div>
+        <div id="creatorInfo" style="margin-top: 15px; display: none;">
+            <div class="detail"><strong>Contact:</strong> <span id="creatorName">-</span></div>
+            <div class="detail"><strong>Company:</strong> <span id="creatorCompany">-</span></div>
+            <div class="detail"><strong>Phone:</strong> <span id="creatorPhone">-</span></div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #667eea; border: 2px solid #4c5fd5;"></div>
+            <span>Property Boundary</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #e74c3c;"></div>
+            <span>Your Location</span>
+        </div>
+    </div>
+
+    <button class="location-btn" id="locationBtn" onclick="centerOnUserLocation()">
+        📍 Center on My Location
+    </button>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let map;
+        let userMarker;
+        let polygonLayers = [];
+        let userLocation = null;
+        let currentTileLayer = null;
+
+        // Define available map styles
+        const mapStyles = {
+            streets: {
+                name: 'Streets',
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            },
+            satellite: {
+                name: 'Satellite',
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri, Maxar, Earthstar Geographics',
+                maxZoom: 19
+            },
+            terrain: {
+                name: 'Terrain',
+                url: 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
+                attribution: '© Stamen Design, © OpenStreetMap contributors',
+                maxZoom: 18,
+                subdomains: ['a', 'b', 'c', 'd']
+            },
+            topo: {
+                name: 'Topographic',
+                url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenTopoMap contributors',
+                maxZoom: 17
+            },
+            dark: {
+                name: 'Dark',
+                url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                attribution: '© OpenStreetMap contributors, © CARTO',
+                maxZoom: 19,
+                subdomains: 'abcd'
+            },
+            outdoors: {
+                name: 'Outdoors',
+                url: 'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=',
+                fallbackUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors, © Thunderforest',
+                maxZoom: 19
+            }
+        };
+
+        function changeMapStyle(styleName) {
+            if (!map || !mapStyles[styleName]) return;
+
+            // Remove current tile layer
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
+
+            // Get style configuration
+            const style = mapStyles[styleName];
+            const tileUrl = style.fallbackUrl || style.url;
+
+            // Add new tile layer
+            currentTileLayer = L.tileLayer(tileUrl, {
+                attribution: style.attribution,
+                maxZoom: style.maxZoom,
+                subdomains: style.subdomains || 'abc'
+            }).addTo(map);
+
+            // Update active state in UI
+            document.querySelectorAll('.style-option').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-style="${styleName}"]`).classList.add('active');
+
+            // Save preference
+            localStorage.setItem('preferredMapStyle', styleName);
+        }
+
+        function toggleStyleSwitcher() {
+            const options = document.getElementById('styleOptions');
+            const toggle = document.getElementById('styleSwitcherToggle');
+            options.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        async function initMap() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const infoPanel = document.getElementById('infoPanel');
+
+            try {
+                // Get map ID from URL parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const mapId = urlParams.get('map');
+
+                // Try to get data from localStorage first
+                let landData = null;
+                const storedData = localStorage.getItem('landData');
+                
+                if (storedData) {
+                    const parsed = JSON.parse(storedData);
+                    if (parsed.mapId === mapId) {
+                        landData = parsed;
+                    }
+                }
+
+                // If not in localStorage or mapId doesn't match, fetch from API
+                if (!landData && mapId) {
+                    const apiUrl = `https://api.id.land/maps/${mapId}/share`;
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch property data');
+                    }
+
+                    const data = await response.json();
+                    const polygons = data.geoJSON.filter(feature => 
+                        feature.geometry && feature.geometry.type === 'Polygon'
+                    );
+
+                    landData = {
+                        name: data.name || 'Unnamed Property',
+                        state: data.state || '',
+                        polygons: polygons.map(p => p.geometry.coordinates),
+                        creator: data.creator || null
+                    };
+                }
+
+                if (!landData || !landData.polygons || landData.polygons.length === 0) {
+                    throw new Error('No property data available');
+                }
+
+                // Initialize the map
+                map = L.map('map').setView([39.8283, -98.5794], 4);
+
+                // Get preferred map style from localStorage or use default
+                const preferredStyle = localStorage.getItem('preferredMapStyle') || 'streets';
+                const style = mapStyles[preferredStyle];
+
+                // Add initial tile layer
+                currentTileLayer = L.tileLayer(style.fallbackUrl || style.url, {
+                    attribution: style.attribution,
+                    maxZoom: style.maxZoom,
+                    subdomains: style.subdomains || 'abc'
+                }).addTo(map);
+
+                // Update UI to reflect saved preference
+                if (preferredStyle !== 'streets') {
+                    document.querySelectorAll('.style-option').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    const preferredBtn = document.querySelector(`[data-style="${preferredStyle}"]`);
+                    if (preferredBtn) {
+                        preferredBtn.classList.add('active');
+                    }
+                }
+
+                // Add polygons to the map
+                const allCoordinates = [];
+                
+                landData.polygons.forEach((polygonCoords, index) => {
+                    // Convert GeoJSON coordinates (lng, lat) to Leaflet format (lat, lng)
+                    const leafletCoords = polygonCoords[0].map(coord => [coord[1], coord[0]]);
+                    allCoordinates.push(...leafletCoords);
+
+                    const polygon = L.polygon(leafletCoords, {
+                        color: '#4c5fd5',
+                        fillColor: '#667eea',
+                        fillOpacity: 0.3,
+                        weight: 3
+                    }).addTo(map);
+
+                    polygon.bindPopup(`
+                        <strong>${landData.name}</strong><br>
+                        ${landData.state ? `${landData.state}<br>` : ''}
+                        Polygon ${index + 1} of ${landData.polygons.length}
+                    `);
+
+                    polygonLayers.push(polygon);
+                });
+
+                // Fit map to polygon bounds
+                if (allCoordinates.length > 0) {
+                    const bounds = L.latLngBounds(allCoordinates);
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+
+                // Update info panel
+                document.getElementById('propertyName').textContent = landData.name;
+                document.getElementById('propertyState').textContent = landData.state || 'N/A';
+                document.getElementById('polygonCount').textContent = landData.polygons.length;
+
+                // Show creator info if available
+                if (landData.creator) {
+                    document.getElementById('creatorInfo').style.display = 'block';
+                    document.getElementById('creatorName').textContent = landData.creator.full_name || 'N/A';
+                    document.getElementById('creatorCompany').textContent = landData.creator.company || 'N/A';
+                    document.getElementById('creatorPhone').textContent = landData.creator.formatted_phone || 'N/A';
+                }
+
+                infoPanel.style.display = 'block';
+
+                // Get user's location
+                getUserLocation();
+
+                // Hide loading overlay
+                loadingOverlay.classList.add('hidden');
+
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                loadingOverlay.innerHTML = `
+                    <div class="error-message">
+                        <h2>⚠️ Error Loading Property</h2>
+                        <p>${error.message}</p>
+                        <a href="admin.html">← Return to Admin Portal</a>
+                    </div>
+                `;
+            }
+        }
+
+        function getUserLocation() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+                        
+                        // Add user marker
+                        if (userMarker) {
+                            map.removeLayer(userMarker);
+                        }
+
+                        const userIcon = L.divIcon({
+                            className: 'user-location-marker',
+                            html: `<div style="
+                                background: #e74c3c;
+                                width: 20px;
+                                height: 20px;
+                                border-radius: 50%;
+                                border: 3px solid white;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                            "></div>`,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        });
+
+                        userMarker = L.marker(userLocation, { icon: userIcon }).addTo(map);
+                        userMarker.bindPopup('<strong>📍 You are here</strong>');
+
+                        // Optionally center on user (commented out to keep focus on property)
+                        // map.setView(userLocation, 13);
+                    },
+                    (error) => {
+                        console.warn('Could not get user location:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                console.warn('Geolocation is not supported by this browser');
+            }
+        }
+
+        function centerOnUserLocation() {
+            if (userLocation) {
+                map.setView(userLocation, 15);
+                if (userMarker) {
+                    userMarker.openPopup();
+                }
+            } else {
+                alert('Location not available. Please allow location access in your browser.');
+                getUserLocation();
+            }
+        }
+
+        // Initialize the map when the page loads
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
+
