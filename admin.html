@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Principal Acres - Admin</title>
+    <title>Meadows-Hale - Admin</title>
     <style>
         * {
             margin: 0;
@@ -69,21 +69,6 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .custom-domain-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .custom-domain-group input[type="text"] {
-            flex: 1;
-        }
-
-        .custom-domain-group span {
-            color: #666;
-            font-size: 0.9em;
-        }
-
         button {
             width: 100%;
             padding: 15px;
@@ -100,10 +85,6 @@
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
         }
 
         button:disabled {
@@ -150,10 +131,6 @@
             color: #666;
         }
 
-        .example strong {
-            color: #333;
-        }
-
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
@@ -169,12 +146,46 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .share-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn, .download-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .share-btn:hover, .download-link:hover {
+            background: #5568d3;
+            color: white;
+        }
+
+        .download-link {
+            background: #6c757d;
+        }
+
+        .download-link:hover {
+            background: #5a6268;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌲 Principal Acres</h1>
-        <p class="subtitle">Admin Portal - Configure Land Boundaries</p>
+        <h1>🌲 Meadows-Hale</h1>
+        <p class="subtitle">Admin Portal - Generate Standalone Property Map</p>
 
         <form id="landForm">
             <div class="form-group">
@@ -192,24 +203,8 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="customDomain">Custom Subdomain (optional)</label>
-                <div class="custom-domain-group">
-                    <input 
-                        type="text" 
-                        id="customDomain" 
-                        name="customDomain" 
-                        placeholder="e.g., julie"
-                    />
-                    <span>.land</span>
-                </div>
-                <div class="example">
-                    <strong>Note:</strong> If provided, the client will access the map at [subdomain].land instead of id.land
-                </div>
-            </div>
-
             <button type="submit" id="submitBtn">
-                Validate & Generate Client Link
+                Generate Standalone HTML File
             </button>
         </form>
 
@@ -217,98 +212,109 @@
     </div>
 
     <script>
-        const form = document.getElementById('landForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const statusDiv = document.getElementById('status');
+        var form = document.getElementById('landForm');
+        var submitBtn = document.getElementById('submitBtn');
+        var statusDiv = document.getElementById('status');
 
-        form.addEventListener('submit', async (e) => {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const landUrl = document.getElementById('landUrl').value.trim();
-            const customDomain = document.getElementById('customDomain').value.trim();
+            var landUrl = document.getElementById('landUrl').value.trim();
 
-            // Disable button and show loading
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loader"></span>Processing...';
-            statusDiv.className = 'status';
             statusDiv.style.display = 'none';
 
             try {
-                // Extract the map ID from the URL
                 const urlMatch = landUrl.match(/maps\/([a-f0-9]+)\/share/);
-                if (!urlMatch) {
-                    throw new Error('Invalid URL format. Please provide a valid land ID URL.');
-                }
+                if (!urlMatch) throw new Error('Invalid URL format');
 
-                const mapId = urlMatch[1];
-                
-                // Construct the API URL
-                const apiUrl = `https://api.id.land/maps/${mapId}/share`;
+                const apiUrl = 'https://api.id.land/maps/' + urlMatch[1] + '/share';
+                statusDiv.className = 'status info';
+                statusDiv.innerHTML = 'Fetching property data...';
+                statusDiv.style.display = 'block';
 
-                showStatus('info', 'Validating URL and fetching data...');
-
-                // Fetch the data from the API
                 const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch data from API (Status: ${response.status})`);
-                }
+                if (!response.ok) throw new Error('Failed to fetch data');
 
                 const data = await response.json();
+                if (!data.geoJSON || data.geoJSON.length === 0) throw new Error('No polygon data found');
 
-                // Validate that we have geoJSON data
-                if (!data.geoJSON || data.geoJSON.length === 0) {
-                    throw new Error('No polygon data found in the response.');
-                }
+                const polygons = data.geoJSON.filter(f => f.geometry && f.geometry.type === 'Polygon');
+                if (polygons.length === 0) throw new Error('No valid polygons found');
 
-                // Extract polygon coordinates
-                const polygons = data.geoJSON.filter(feature => 
-                    feature.geometry && feature.geometry.type === 'Polygon'
-                );
+                statusDiv.innerHTML = 'Generating HTML file...';
 
-                if (polygons.length === 0) {
-                    throw new Error('No valid polygons found in the geoJSON data.');
-                }
+                const templateResponse = await fetch('client.html');
+                const templateHtml = await templateResponse.text();
 
-                // Store the data for the client
-                const clientData = {
-                    mapId: mapId,
-                    name: data.name || 'Unnamed Property',
-                    state: data.state || '',
+                const landData = {
+                    name: data.name || 'Property',
+                    state: data.state || 'N/A',
                     polygons: polygons.map(p => p.geometry.coordinates),
-                    creator: data.creator || null,
-                    customDomain: customDomain || null,
-                    originalUrl: landUrl
+                    creator: data.creator || null
                 };
 
-                localStorage.setItem('landData', JSON.stringify(clientData));
+                const bundled = templateHtml.replace(
+                    'async function initMap() {',
+                    'window.LAND_DATA=' + JSON.stringify(landData) + ';async function initMap() {if(window.LAND_DATA){const landData=window.LAND_DATA;try{map=L.map("map").setView([39.8,-98.6],4);const s=mapStyles.streets;currentTileLayer=L.tileLayer(s.url,{attribution:s.attribution,maxZoom:s.maxZoom,subdomains:"abc"}).addTo(map);const ac=[];landData.polygons.forEach((pc,i)=>{const lc=pc[0].map(c=>[c[1],c[0]]);ac.push(...lc);L.polygon(lc,{color:"#4c5fd5",fillColor:"#667eea",fillOpacity:0.3,weight:3}).addTo(map).bindPopup("<strong>"+landData.name+"</strong><br>Polygon "+(i+1));});if(ac.length>0)map.fitBounds(L.latLngBounds(ac),{padding:[50,50]});document.getElementById("propertyName").textContent=landData.name;document.getElementById("propertyState").textContent=landData.state;document.getElementById("polygonCount").textContent=landData.polygons.length;if(landData.creator){document.getElementById("creatorInfo").style.display="block";document.getElementById("creatorName").textContent=landData.creator.full_name||"N/A";document.getElementById("creatorCompany").textContent=landData.creator.company||"N/A";document.getElementById("creatorPhone").textContent=landData.creator.formatted_phone||"N/A";}document.getElementById("infoPanel").style.display="block";getUserLocation();document.getElementById("loadingOverlay").classList.add("hidden");}catch(e){console.error(e);document.getElementById("loadingOverlay").innerHTML="<div class=\\"error-message\\"><h2>Error</h2><p>"+e.message+"</p></div>";}return;}'
+                );
 
-                // Generate client URL
-                const clientUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', 'client.html')}?map=${mapId}`;
+                const blob = new Blob([bundled], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const filename = (data.name || 'property').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_map.html';
+                const file = new File([blob], filename, { type: 'text/html' });
 
-                showStatus('success', `
-                    <strong>✓ Success!</strong><br><br>
-                    <strong>Property:</strong> ${clientData.name}${clientData.state ? ` (${clientData.state})` : ''}<br>
-                    <strong>Polygons found:</strong> ${polygons.length}<br><br>
-                    <a href="${clientUrl}" style="color: inherit; text-decoration: underline;">
-                        Click here to view on map →
-                    </a>
-                `);
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '<strong>✓ Success!</strong><br><br>' +
+                    '<strong>Property:</strong> ' + landData.name + '<br>' +
+                    '<strong>Polygons:</strong> ' + polygons.length + '<br><br>' +
+                    '<div class="share-actions">' +
+                    '<button type="button" id="shareBtn" class="share-btn">📤 Share</button>' +
+                    '<a href="' + url + '" download="' + filename + '" class="download-link">📥 Download</a>' +
+                    '</div>' +
+                    '<br><small style="color:#666;">Share opens Email, Messages, etc. on macOS.</small>';
+                statusDiv.style.display = 'block';
+
+                var shareBtn = document.getElementById('shareBtn');
+                if (shareBtn && navigator.share) {
+                    shareBtn.onclick = function() {
+                        var shareData = {
+                            title: landData.name + ' - Property Map',
+                            text: 'Property map: ' + landData.name + (landData.state !== 'N/A' ? ' (' + landData.state + ')' : ''),
+                            files: [file]
+                        };
+                        if (navigator.canShare && navigator.canShare(shareData)) {
+                            navigator.share(shareData).then(function() {
+                                shareBtn.textContent = '✓ Shared';
+                            }).catch(function(err) {
+                                if (err.name !== 'AbortError') {
+                                    window.open(url);
+                                }
+                            });
+                        } else {
+                            window.open(url);
+                        }
+                    };
+                } else if (shareBtn) {
+                    shareBtn.textContent = '📥 Download instead';
+                    shareBtn.onclick = function() {
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        a.click();
+                    };
+                }
 
             } catch (error) {
-                showStatus('error', `<strong>✗ Error:</strong> ${error.message}`);
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '<strong>✗ Error:</strong> ' + error.message;
+                statusDiv.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Validate & Generate Client Link';
+                submitBtn.innerHTML = 'Generate Standalone HTML File';
             }
         });
-
-        function showStatus(type, message) {
-            statusDiv.className = `status ${type}`;
-            statusDiv.innerHTML = message;
-            statusDiv.style.display = 'block';
-        }
     </script>
 </body>
 </html>
-

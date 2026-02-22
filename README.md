@@ -1,4 +1,4 @@
-# Principal Acres Web Application
+# Meadows-Hale Web Application
 
 A web application for viewing land property boundaries on an interactive map with geolocation features.
 
