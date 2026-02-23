@@ -30,6 +30,17 @@
             height: 100vh;
         }
 
+        .map-logo-watermark {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            max-width: 100px;
+            height: auto;
+            opacity: 0.45;
+            pointer-events: none;
+            z-index: 999;
+        }
+
         .info-panel {
             position: absolute;
             top: 20px;
@@ -584,6 +595,8 @@
     </div>
 
     <div id="map"></div>
+
+    <img src="meadows-hale-logo.png" alt="Meadows-Hale" class="map-logo-watermark" />
 
     <div class="map-style-backdrop" id="mapStyleBackdrop" aria-hidden="true"></div>
     <button type="button" class="map-style-trigger-mobile" id="mapStyleTriggerMobile" aria-label="Open map style">🗺️ Map Style</button>
