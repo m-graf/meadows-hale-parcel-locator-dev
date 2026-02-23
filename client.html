@@ -241,59 +241,6 @@
             color: #c0392b;
         }
 
-        /* Simple Direction Widget */
-        .direction-widget {
-            position: absolute;
-            bottom: 88px;
-            right: 16px;
-            background: white;
-            border-radius: 10px;
-            padding: 12px 14px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            text-align: center;
-            min-width: 100px;
-        }
-
-        .direction-arrow {
-            font-size: 42px;
-            line-height: 1;
-            margin-bottom: 6px;
-            transition: transform 0.2s ease-out;
-            display: inline-block;
-        }
-
-        .direction-name {
-            font-size: 0.9em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 2px;
-        }
-
-        .direction-degrees {
-            font-size: 0.75em;
-            color: #666;
-        }
-
-        .enable-btn {
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85em;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-        }
-
-        .status-text {
-            font-size: 0.7em;
-            color: #4caf50;
-            margin-top: 4px;
-        }
-
         @media (max-width: 600px) {
             .legend {
                 bottom: 20px;
@@ -318,17 +265,6 @@
                 margin-left: 0;
                 padding: 8px 12px;
             }
-
-            .direction-widget {
-                bottom: 78px;
-                right: 12px;
-                padding: 10px 12px;
-                min-width: 88px;
-            }
-
-            .direction-arrow { font-size: 36px; }
-            .direction-name { font-size: 0.85em; }
-            .enable-btn { padding: 8px 10px; font-size: 0.8em; }
         }
 
         /* Map Style Switcher */
@@ -572,15 +508,6 @@
         </div>
     </div>
 
-    <!-- Simple Direction Widget -->
-    <div class="direction-widget" id="directionWidget">
-        <div class="direction-arrow" id="directionArrow">⬆️</div>
-        <div class="direction-name" id="directionName">North</div>
-        <div class="direction-degrees" id="directionDegrees">0°</div>
-        <button class="enable-btn" id="enableBtn" onclick="enableDirection()">Enable</button>
-        <div class="status-text" id="statusText" style="display: none;">Active</div>
-    </div>
-
     <button class="location-btn" id="locationBtn" onclick="centerOnUserLocation()">
         📍 My Location
     </button>
@@ -593,7 +520,6 @@
         let map, userMarker, currentTileLayer;
         let polygonLayers = [];
         let userLocation = null;
-        let isDirectionActive = false;
 
         const mapStyles = {
             streets: {
@@ -649,46 +575,6 @@
         function toggleStyleSwitcher() {
             document.getElementById('styleOptions').classList.toggle('open');
             document.getElementById('styleSwitcherToggle').classList.toggle('open');
-        }
-
-        // Direction/Compass Functions
-        function getDirectionName(degrees) {
-            const dirs = ['North', 'NE', 'East', 'SE', 'South', 'SW', 'West', 'NW'];
-            return dirs[Math.round(degrees / 45) % 8];
-        }
-
-        function handleOrientation(event) {
-            if (!isDirectionActive) return;
-
-            let heading = event.webkitCompassHeading || (event.alpha !== null ? 360 - event.alpha : null);
-            
-            if (heading !== null) {
-                heading = (heading + 360) % 360;
-                document.getElementById('directionArrow').style.transform = `rotate(${heading}deg)`;
-                document.getElementById('directionName').textContent = getDirectionName(heading);
-                document.getElementById('directionDegrees').textContent = `${Math.round(heading)}°`;
-            }
-        }
-
-        async function enableDirection() {
-            try {
-                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission !== 'granted') {
-                        alert('Permission denied');
-                        return;
-                    }
-                }
-                
-                isDirectionActive = true;
-                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-                window.addEventListener('deviceorientation', handleOrientation, true);
-                
-                document.getElementById('enableBtn').style.display = 'none';
-                document.getElementById('statusText').style.display = 'block';
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
         }
 
         async function initMap() {
