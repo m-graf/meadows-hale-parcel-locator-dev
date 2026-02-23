@@ -264,7 +264,9 @@
             border-radius: 10px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            touch-action: manipulation;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .legend-item {
@@ -732,7 +734,7 @@
         </div>
     </div>
 
-    <div class="legend">
+    <div class="legend" ondblclick="event.preventDefault(); return false;">
         <div class="legend-item">
             <div class="legend-color" style="background: #667eea; border: 2px solid #4c5fd5;"></div>
             <span>Property Boundary</span>
@@ -758,7 +760,7 @@
 
     <script>
         (function() {
-            var APP_VERSION = '1.0.1';
+            var APP_VERSION = '1.0.2';
             var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
             var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
             var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
