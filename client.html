@@ -414,6 +414,68 @@
         .leaflet-popup-content {
             margin: 15px;
         }
+
+        /* Polygon navigator: only shown when multiple polygons */
+        .polygon-nav {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            padding: 10px 14px;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .polygon-nav.visible {
+            display: flex;
+        }
+
+        .polygon-nav-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: #667eea;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .polygon-nav-btn:hover {
+            background: #5568d3;
+        }
+
+        .polygon-nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .polygon-nav-label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #333;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .polygon-nav {
+                bottom: 80px;
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            .polygon-nav-btn { width: 32px; height: 32px; font-size: 1em; }
+            .polygon-nav-label { font-size: 0.85em; min-width: 80px; }
+        }
     </style>
 </head>
 <body>
@@ -518,6 +580,12 @@
     </button>
     <div class="location-hint" id="locationHint">Allow location when prompted to see your position on the map.</div>
 
+    <div class="polygon-nav" id="polygonNav" aria-label="Navigate polygons">
+        <button type="button" class="polygon-nav-btn" id="polygonNavPrev" title="Previous polygon" aria-label="Previous polygon">◀</button>
+        <span class="polygon-nav-label" id="polygonNavLabel">Polygon 1 of 1</span>
+        <button type="button" class="polygon-nav-btn" id="polygonNavNext" title="Next polygon" aria-label="Next polygon">▶</button>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -525,6 +593,7 @@
         let map, userMarker, currentTileLayer;
         let polygonLayers = [];
         let userLocation = null;
+        let currentPolygonIndex = 0;
 
         const mapStyles = {
             streets: {
@@ -647,6 +716,43 @@
 
                 if (allCoordinates.length > 0) {
                     map.fitBounds(L.latLngBounds(allCoordinates), { padding: [50, 50] });
+                }
+
+                if (polygonLayers.length > 1) {
+                    const nav = document.getElementById('polygonNav');
+                    const prevBtn = document.getElementById('polygonNavPrev');
+                    const labelEl = document.getElementById('polygonNavLabel');
+                    const nextBtn = document.getElementById('polygonNavNext');
+                    nav.classList.add('visible');
+                    function updatePolygonNav() {
+                        labelEl.textContent = 'Polygon ' + (currentPolygonIndex + 1) + ' of ' + polygonLayers.length;
+                        prevBtn.disabled = polygonLayers.length <= 1;
+                        nextBtn.disabled = polygonLayers.length <= 1;
+                        polygonLayers.forEach(function(layer, i) {
+                            layer.setStyle({
+                                weight: i === currentPolygonIndex ? 5 : 3,
+                                fillOpacity: i === currentPolygonIndex ? 0.5 : 0.3,
+                                color: '#4c5fd5',
+                                fillColor: '#667eea'
+                            });
+                        });
+                    }
+                    function zoomToCurrentPolygon() {
+                        var bounds = polygonLayers[currentPolygonIndex].getBounds();
+                        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                        polygonLayers[currentPolygonIndex].openPopup();
+                    }
+                    prevBtn.onclick = function() {
+                        currentPolygonIndex = (currentPolygonIndex - 1 + polygonLayers.length) % polygonLayers.length;
+                        updatePolygonNav();
+                        zoomToCurrentPolygon();
+                    };
+                    nextBtn.onclick = function() {
+                        currentPolygonIndex = (currentPolygonIndex + 1) % polygonLayers.length;
+                        updatePolygonNav();
+                        zoomToCurrentPolygon();
+                    };
+                    updatePolygonNav();
                 }
 
                 document.getElementById('propertyName').textContent = landData.name;
