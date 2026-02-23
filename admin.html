@@ -408,7 +408,7 @@
                 const url = URL.createObjectURL(blob);
                 const file = new File([blob], filename, { type: 'text/html' });
 
-                var baseUrl = window.location.origin + window.location.pathname.replace(/\/admin(\.html)?$/, '').replace(/\/?$/, '/');
+                var baseUrl = window.location.origin + window.location.pathname.replace(/\/admin(\.html)?\/?$/, '').replace(/\/?$/, '/');
                 var shareableLink = baseUrl + 'client.html?map=' + urlMatch[1];
 
                 statusDiv.className = 'status success';
