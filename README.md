@@ -10,6 +10,19 @@ A web application for viewing land property boundaries on an interactive map wit
 - **Geolocation**: Shows user's current position on the map
 - **Responsive Design**: Modern, mobile-friendly interface
 
+## Admin authentication
+
+The admin page is protected by username/password. **No plain-text credentials are stored:** only SHA-256 hashes (with a salt) are in the source. The default credentials in the repo are for development only.
+
+**For production:** generate your own hashes and replace the `AUTH` object in `admin.html`:
+
+```bash
+# Node (one-liner). Replace YOUR_SALT, YOUR_USER, YOUR_PASS.
+node -e "const s='YOUR_SALT',u='YOUR_USER',p='YOUR_PASS';const h=x=>require('crypto').createHash('sha256').update(x).digest('hex');console.log('userHash:',h(s+u),'passHash:',h(s+p));"
+```
+
+Use the same salt for both. Update `AUTH.salt`, `AUTH.userHash`, and `AUTH.passHash` in the script.
+
 ## Hosting (GitHub Pages)
 
 For shareable links that work on iOS, host the app on GitHub Pages. Repo: **meadows-hale-parcel-locator**. See [GITHUB_PAGES.md](GITHUB_PAGES.md) for step-by-step setup.

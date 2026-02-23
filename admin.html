@@ -183,10 +183,50 @@
         .download-link:hover {
             background: #5a6268;
         }
+
+        #loginForm .form-group:last-of-type { margin-bottom: 20px; }
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .login-error { margin-top: 12px; color: #721c24; font-size: 0.9em; display: none; }
+        .login-error.visible { display: block; }
+        #logoutWrap { text-align: right; margin-bottom: 10px; }
+        #logoutWrap a { color: rgba(255,255,255,0.9); font-size: 0.9em; text-decoration: none; }
+        #logoutWrap a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Auth: only hashes are stored. Replace AUTH in the script with your own salt + SHA-256(salt+username) and SHA-256(salt+password) for production. -->
+    <div id="loginForm" class="container">
+        <h1>🌲 Meadows-Hale</h1>
+        <p class="subtitle">Admin – sign in</p>
+        <form id="authForm">
+            <div class="form-group">
+                <label for="authUser">Username</label>
+                <input type="text" id="authUser" name="username" autocomplete="username" required />
+            </div>
+            <div class="form-group">
+                <label for="authPass">Password</label>
+                <input type="password" id="authPass" name="password" autocomplete="current-password" required />
+            </div>
+            <p id="loginError" class="login-error">Invalid username or password.</p>
+            <button type="submit">Log in</button>
+        </form>
+    </div>
+
+    <div id="adminContent" style="display: none;">
+        <div id="logoutWrap"><a href="#" id="logoutLink">Log out</a></div>
+        <div class="container">
         <h1>🌲 Meadows-Hale</h1>
         <p class="subtitle">Admin Portal - Generate Standalone Property Map</p>
 
@@ -212,9 +252,58 @@
         </form>
 
         <div id="status" class="status"></div>
+        </div>
     </div>
 
     <script>
+        (function() {
+            var AUTH = {
+                salt: 'pa_salt_2025',
+                userHash: 'fa9f098a70aab4c3d7a0711a4a91400e32893d387fb91b94d46b233746eec756',
+                passHash: 'f5a995b4950dfb39084d6b87436a5ee7a9839de059a02900cecdb96e82a62edd'
+            };
+            function bufToHex(buf) {
+                return Array.from(new Uint8Array(buf)).map(function(b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+            }
+            function sha256Hex(str) {
+                return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function(buf) { return bufToHex(buf); });
+            }
+            function checkAuth() {
+                if (sessionStorage.getItem('admin_authenticated') === '1') {
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'block';
+                    return true;
+                }
+                return false;
+            }
+            if (checkAuth()) {
+                document.getElementById('logoutLink').onclick = function(e) {
+                    e.preventDefault();
+                    sessionStorage.removeItem('admin_authenticated');
+                    location.reload();
+                };
+            } else {
+                document.getElementById('authForm').onsubmit = async function(e) {
+                    e.preventDefault();
+                    var user = (document.getElementById('authUser').value || '').trim();
+                    var pass = document.getElementById('authPass').value || '';
+                    var errEl = document.getElementById('loginError');
+                    errEl.classList.remove('visible');
+                    try {
+                        var uHash = await sha256Hex(AUTH.salt + user);
+                        var pHash = await sha256Hex(AUTH.salt + pass);
+                        if (uHash === AUTH.userHash && pHash === AUTH.passHash) {
+                            sessionStorage.setItem('admin_authenticated', '1');
+                            location.reload();
+                        } else {
+                            errEl.classList.add('visible');
+                        }
+                    } catch (err) {
+                        errEl.classList.add('visible');
+                    }
+                };
+            }
+        })();
         var form = document.getElementById('landForm');
         var submitBtn = document.getElementById('submitBtn');
         var statusDiv = document.getElementById('status');
