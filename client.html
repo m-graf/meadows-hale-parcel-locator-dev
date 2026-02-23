@@ -29,73 +29,29 @@
         .info-panel {
             position: absolute;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            right: auto;
+            right: 20px;
             background: white;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            max-width: 320px;
+            max-width: 300px;
             z-index: 1000;
-            overflow: hidden;
         }
 
-        .info-panel-header {
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            user-select: none;
-            gap: 12px;
-        }
-
-        .info-panel-header h2 {
-            font-size: 1.15em;
+        .info-panel h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
             color: #333;
-            margin: 0;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .info-panel-toggle {
-            flex-shrink: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: #f0f0f0;
-            color: #666;
-            transition: transform 0.25s ease, background 0.2s;
-        }
-
-        .info-panel-toggle.open {
-            transform: rotate(180deg);
-            background: #e8ecff;
-            color: #667eea;
-        }
-
-        .info-panel-body {
-            padding: 14px 18px 18px;
-            border-top: 1px solid #eee;
         }
 
         .info-panel .detail {
-            margin: 10px 0;
+            margin: 8px 0;
             font-size: 0.9em;
             color: #666;
         }
 
         .info-panel .detail strong {
             color: #333;
-        }
-
-        .info-panel #creatorInfo {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
         }
 
         .loading-overlay {
@@ -173,46 +129,41 @@
 
         .legend {
             position: absolute;
-            bottom: 24px;
-            left: 16px;
+            bottom: 30px;
+            left: 20px;
             background: white;
-            padding: 12px 16px;
-            border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin: 6px 0;
-            font-size: 0.85em;
+            margin: 5px 0;
+            font-size: 0.9em;
         }
 
-        .legend-item:first-child { margin-top: 0; }
-        .legend-item:last-child { margin-bottom: 0; }
-
         .legend-color {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             margin-right: 10px;
-            flex-shrink: 0;
         }
 
         .location-btn {
             position: absolute;
-            bottom: 24px;
-            right: 16px;
+            bottom: 30px;
+            right: 20px;
             background: white;
             border: 2px solid #667eea;
-            padding: 10px 16px;
-            border-radius: 10px;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9em;
             color: #667eea;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             transition: all 0.2s ease;
         }
@@ -224,131 +175,101 @@
 
         .location-hint {
             position: absolute;
-            bottom: 24px;
-            right: 16px;
-            left: 180px;
-            margin-left: 12px;
+            bottom: 30px;
+            right: 20px;
+            left: 220px;
+            margin-left: 10px;
             background: rgba(255,255,255,0.95);
-            padding: 10px 14px;
-            border-radius: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 0.8em;
             color: #666;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .location-hint.location-error {
             color: #c0392b;
         }
 
+        @media (max-width: 600px) {
+            .location-hint {
+                left: 20px;
+                bottom: 90px;
+            }
+        }
+
         /* Simple Direction Widget */
         .direction-widget {
             position: absolute;
-            bottom: 88px;
-            right: 16px;
+            bottom: 100px;
+            right: 20px;
             background: white;
-            border-radius: 10px;
-            padding: 12px 14px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             text-align: center;
-            min-width: 100px;
+            min-width: 110px;
         }
 
         .direction-arrow {
-            font-size: 42px;
+            font-size: 50px;
             line-height: 1;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             transition: transform 0.2s ease-out;
             display: inline-block;
         }
 
         .direction-name {
-            font-size: 0.9em;
+            font-size: 0.95em;
             font-weight: 600;
             color: #333;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .direction-degrees {
-            font-size: 0.75em;
+            font-size: 0.8em;
             color: #666;
         }
 
         .enable-btn {
-            margin-top: 8px;
-            padding: 8px 12px;
+            margin-top: 10px;
+            padding: 10px 16px;
             background: #667eea;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 0.85em;
+            font-size: 0.9em;
             cursor: pointer;
             font-weight: 600;
             width: 100%;
         }
 
         .status-text {
-            font-size: 0.7em;
+            font-size: 0.75em;
             color: #4caf50;
-            margin-top: 4px;
-        }
-
-        @media (max-width: 600px) {
-            .legend {
-                bottom: 20px;
-                left: 12px;
-                padding: 10px 12px;
-            }
-
-            .legend-item { font-size: 0.8em; }
-            .legend-color { width: 14px; height: 14px; margin-right: 8px; }
-
-            .location-btn {
-                bottom: 20px;
-                right: 12px;
-                padding: 10px 14px;
-                font-size: 0.85em;
-            }
-
-            .location-hint {
-                left: 12px;
-                right: 12px;
-                bottom: 78px;
-                margin-left: 0;
-                padding: 8px 12px;
-            }
-
-            .direction-widget {
-                bottom: 78px;
-                right: 12px;
-                padding: 10px 12px;
-                min-width: 88px;
-            }
-
-            .direction-arrow { font-size: 36px; }
-            .direction-name { font-size: 0.85em; }
-            .enable-btn { padding: 8px 10px; font-size: 0.8em; }
+            margin-top: 6px;
         }
 
         /* Map Style Switcher */
         .map-style-switcher {
             position: absolute;
-            top: 16px;
-            left: 16px;
+            top: 20px;
+            left: 20px;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             overflow: hidden;
         }
 
         .style-switcher-header {
-            padding: 12px 14px;
+            padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: 0.95em;
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -357,7 +278,7 @@
 
         .style-switcher-toggle {
             margin-left: auto;
-            transition: transform 0.25s ease;
+            transition: transform 0.3s ease;
         }
 
         .style-switcher-toggle.open {
@@ -370,11 +291,11 @@
             gap: 0;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.25s ease;
+            transition: max-height 0.3s ease;
         }
 
         .style-options.open {
-            max-height: 420px;
+            max-height: 500px;
         }
 
         .style-option {
@@ -382,7 +303,7 @@
             border: none;
             background: white;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
             position: relative;
         }
 
@@ -397,37 +318,36 @@
         .style-option.active::after {
             content: '✓';
             position: absolute;
-            top: 6px;
-            right: 6px;
+            top: 8px;
+            right: 8px;
             background: #667eea;
             color: white;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
         }
 
         .style-preview {
             width: 100%;
-            height: 70px;
+            height: 80px;
             object-fit: cover;
             display: block;
         }
 
         .style-label {
-            padding: 8px;
-            font-size: 0.8em;
+            padding: 10px;
+            font-size: 0.85em;
             font-weight: 600;
             color: #333;
             text-align: center;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #e0e0e0;
         }
 
-        /* Mobile: info panel full width, collapsible, collapsed by default */
         @media (max-width: 768px) {
             .map-style-switcher {
                 top: 10px;
@@ -436,33 +356,8 @@
 
             .info-panel {
                 top: 10px;
-                left: 10px;
                 right: 10px;
-                transform: none;
-                max-width: none;
-            }
-
-            .info-panel.collapsed .info-panel-body {
-                display: none;
-            }
-
-            .info-panel-header {
-                padding: 12px 14px;
-            }
-
-            .info-panel-header h2 {
-                font-size: 1.05em;
-            }
-        }
-
-        /* Desktop: always show body */
-        @media (min-width: 769px) {
-            .info-panel .info-panel-body {
-                display: block !important;
-            }
-
-            .info-panel .info-panel-toggle {
-                display: none;
+                max-width: 250px;
             }
         }
 
@@ -546,18 +441,13 @@
     </div>
 
     <div class="info-panel" id="infoPanel" style="display: none;">
-        <div class="info-panel-header" id="infoPanelHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="infoPanelBody">
-            <h2 id="propertyName">Property</h2>
-            <span class="info-panel-toggle" id="infoPanelToggle" aria-hidden="true">▼</span>
-        </div>
-        <div class="info-panel-body" id="infoPanelBody">
-            <div class="detail"><strong>State:</strong> <span id="propertyState">-</span></div>
-            <div class="detail"><strong>Polygons:</strong> <span id="polygonCount">0</span></div>
-            <div id="creatorInfo" style="margin-top: 15px; display: none;">
-                <div class="detail"><strong>Contact:</strong> <span id="creatorName">-</span></div>
-                <div class="detail"><strong>Company:</strong> <span id="creatorCompany">-</span></div>
-                <div class="detail"><strong>Phone:</strong> <span id="creatorPhone">-</span></div>
-            </div>
+        <h2 id="propertyName">Property</h2>
+        <div class="detail"><strong>State:</strong> <span id="propertyState">-</span></div>
+        <div class="detail"><strong>Polygons:</strong> <span id="polygonCount">0</span></div>
+        <div id="creatorInfo" style="margin-top: 15px; display: none;">
+            <div class="detail"><strong>Contact:</strong> <span id="creatorName">-</span></div>
+            <div class="detail"><strong>Company:</strong> <span id="creatorCompany">-</span></div>
+            <div class="detail"><strong>Phone:</strong> <span id="creatorPhone">-</span></div>
         </div>
     </div>
 
@@ -770,7 +660,6 @@
                 }
 
                 document.getElementById('infoPanel').style.display = 'block';
-                initInfoPanelCollapse();
 
                 getUserLocation();
                 document.getElementById('loadingOverlay').classList.add('hidden');
@@ -785,32 +674,6 @@
                     </div>
                 `;
             }
-        }
-
-        function initInfoPanelCollapse() {
-            var panel = document.getElementById('infoPanel');
-            var header = document.getElementById('infoPanelHeader');
-            var toggle = document.getElementById('infoPanelToggle');
-            var body = document.getElementById('infoPanelBody');
-            if (!panel || !header) return;
-
-            function isMobile() {
-                return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-            }
-
-            if (isMobile()) {
-                panel.classList.add('collapsed');
-                if (toggle) toggle.classList.remove('open');
-                if (header) header.setAttribute('aria-expanded', 'false');
-            }
-
-            header.addEventListener('click', function() {
-                if (!isMobile()) return;
-                panel.classList.toggle('collapsed');
-                var open = !panel.classList.contains('collapsed');
-                if (toggle) toggle.classList.toggle('open', open);
-                header.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
         }
 
         function getUserLocation() {
