@@ -264,7 +264,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            touch-action: none;
+            touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -734,7 +734,7 @@
         </div>
     </div>
 
-    <div class="legend" ondblclick="event.preventDefault(); return false;">
+    <div class="legend" id="legendBox">
         <div class="legend-item">
             <div class="legend-color" style="background: #667eea; border: 2px solid #4c5fd5;"></div>
             <span>Property Boundary</span>
@@ -760,12 +760,29 @@
 
     <script>
         (function() {
-            var APP_VERSION = '1.0.2';
+            var APP_VERSION = '1.0.3';
             var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
             var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
             var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
             var el = document.querySelector('.beta-tag');
             if (el) el.href = feedbackUrl;
+        })();
+        (function() {
+            var legend = document.getElementById('legendBox');
+            if (!legend) return;
+            legend.addEventListener('dblclick', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, true);
+            var lastTap = 0;
+            legend.addEventListener('touchend', function(e) {
+                var now = Date.now();
+                if (now - lastTap < 400) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                lastTap = now;
+            }, true);
         })();
         let map, userMarker, currentTileLayer;
         let polygonLayers = [];
