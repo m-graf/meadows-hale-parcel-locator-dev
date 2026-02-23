@@ -73,6 +73,19 @@
             min-width: 0;
         }
 
+        .locate-link {
+            font-size: 0.75em;
+            font-weight: normal;
+            color: #667eea;
+            text-decoration: none;
+            margin-left: 6px;
+            white-space: nowrap;
+        }
+
+        .locate-link:hover {
+            text-decoration: underline;
+        }
+
         .info-panel-toggle {
             flex-shrink: 0;
             width: 32px;
@@ -666,7 +679,7 @@
 
     <div class="info-panel" id="infoPanel" style="display: none;">
         <div class="info-panel-header" id="infoPanelHeader" role="button" tabindex="0" aria-expanded="false" aria-controls="infoPanelBody">
-            <h2 id="propertyName">Property</h2>
+            <h2><span id="propertyName">Property</span><a href="#" class="locate-link" id="locateLink">[Locate]</a></h2>
             <span class="info-panel-toggle" id="infoPanelToggle" aria-hidden="true">▼</span>
         </div>
         <div class="info-panel-body" id="infoPanelBody">
@@ -915,6 +928,17 @@
                 document.getElementById('propertyName').textContent = landData.name;
                 document.getElementById('propertyState').textContent = landData.state || 'N/A';
                 document.getElementById('polygonCount').textContent = landData.polygons.length;
+
+                var locateLink = document.getElementById('locateLink');
+                if (locateLink && polygonLayers.length > 0) {
+                    locateLink.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var bounds = L.latLngBounds();
+                        polygonLayers.forEach(function(layer) { bounds.extend(layer.getBounds()); });
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                    };
+                }
 
                 if (landData.creator) {
                     document.getElementById('creatorInfo').style.display = 'block';
