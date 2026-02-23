@@ -647,7 +647,7 @@
 
     <div id="map"></div>
 
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a>
+    <a href="#" target="_blank" rel="noopener" class="beta-tag">Beta</a>
     <img src="meadows-hale-logo.png" alt="Meadows-Hale" class="map-logo-watermark" />
 
     <div class="map-style-backdrop" id="mapStyleBackdrop" aria-hidden="true"></div>
@@ -757,6 +757,14 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        (function() {
+            var APP_VERSION = '1.0.1';
+            var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
+            var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
+            var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
+            var el = document.querySelector('.beta-tag');
+            if (el) el.href = feedbackUrl;
+        })();
         let map, userMarker, currentTileLayer;
         let polygonLayers = [];
         let userLocation = null;

@@ -253,7 +253,7 @@
 <body>
     <!-- Auth: only hashes are stored. Replace AUTH in the script with your own salt + SHA-256(salt+username) and SHA-256(salt+password) for production. -->
     <div id="loginForm" class="container">
-        <h1>🌲 Meadows-Hale <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
+        <h1>🌲 Meadows-Hale <a href="#" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
         <p class="subtitle">Admin – sign in</p>
         <form id="authForm">
             <div class="form-group">
@@ -272,7 +272,7 @@
     <div id="adminContent" style="display: none;">
         <div id="logoutWrap"><a href="#" id="logoutLink">Log out</a></div>
         <div class="container">
-        <h1>🌲 Meadows-Hale <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
+        <h1>🌲 Meadows-Hale <a href="#" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
         <p class="subtitle">Admin Portal - Get shareable client link</p>
 
         <form id="landForm">
@@ -301,6 +301,13 @@
     </div>
 
     <script>
+        (function() {
+            var APP_VERSION = '1.0.1';
+            var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
+            var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
+            var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
+            document.querySelectorAll('.beta-tag').forEach(function(a) { a.href = feedbackUrl; });
+        })();
         (function() {
             var AUTH = {
                 salt: '9c642f0a-4071-4790-8ef2-a680cfe930d6',
