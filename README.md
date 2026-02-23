@@ -10,6 +10,10 @@ A web application for viewing land property boundaries on an interactive map wit
 - **Geolocation**: Shows user's current position on the map
 - **Responsive Design**: Modern, mobile-friendly interface
 
+## Hosting (GitHub Pages)
+
+For shareable links that work on iOS, host the app on GitHub Pages. Repo: **meadows-hale-parcel-locator**. See [GITHUB_PAGES.md](GITHUB_PAGES.md) for step-by-step setup.
+
 ## Quick Start
 
 ### Admin Portal (`admin.html`)

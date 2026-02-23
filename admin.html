@@ -216,6 +216,21 @@
         var submitBtn = document.getElementById('submitBtn');
         var statusDiv = document.getElementById('status');
 
+        function humanizedFilename(data) {
+            var parts = [];
+            if (data.name) parts.push(data.name);
+            var addr = data.address || data.street_address || data.property_address || data.public_address || (data.city && (data.city + (data.state ? ', ' + data.state : '')));
+            if (addr) parts.push(addr);
+            else {
+                if (data.county) parts.push(data.county);
+                if (data.state && data.state !== 'N/A') parts.push(data.state);
+            }
+            var base = parts.length ? parts.join(' - ') : 'property';
+            base = base.replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (base.length > 60) base = base.slice(0, 57) + '...';
+            return (base || 'property') + '_map.html';
+        }
+
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -260,49 +275,63 @@
                     'window.LAND_DATA=' + JSON.stringify(landData) + ';async function initMap() {if(window.LAND_DATA){const landData=window.LAND_DATA;try{map=L.map("map").setView([39.8,-98.6],4);const s=mapStyles.streets;currentTileLayer=L.tileLayer(s.url,{attribution:s.attribution,maxZoom:s.maxZoom,subdomains:"abc"}).addTo(map);const ac=[];landData.polygons.forEach((pc,i)=>{const lc=pc[0].map(c=>[c[1],c[0]]);ac.push(...lc);L.polygon(lc,{color:"#4c5fd5",fillColor:"#667eea",fillOpacity:0.3,weight:3}).addTo(map).bindPopup("<strong>"+landData.name+"</strong><br>Polygon "+(i+1));});if(ac.length>0)map.fitBounds(L.latLngBounds(ac),{padding:[50,50]});document.getElementById("propertyName").textContent=landData.name;document.getElementById("propertyState").textContent=landData.state;document.getElementById("polygonCount").textContent=landData.polygons.length;if(landData.creator){document.getElementById("creatorInfo").style.display="block";document.getElementById("creatorName").textContent=landData.creator.full_name||"N/A";document.getElementById("creatorCompany").textContent=landData.creator.company||"N/A";document.getElementById("creatorPhone").textContent=landData.creator.formatted_phone||"N/A";}document.getElementById("infoPanel").style.display="block";getUserLocation();document.getElementById("loadingOverlay").classList.add("hidden");}catch(e){console.error(e);document.getElementById("loadingOverlay").innerHTML="<div class=\\"error-message\\"><h2>Error</h2><p>"+e.message+"</p></div>";}return;}'
                 );
 
+                var filename = humanizedFilename(data);
+
                 const blob = new Blob([bundled], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
-                const filename = (data.name || 'property').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_map.html';
                 const file = new File([blob], filename, { type: 'text/html' });
+
+                var baseUrl = window.location.origin + window.location.pathname.replace(/admin\.html$/, '').replace(/\/?$/, '/');
+                var shareableLink = baseUrl + 'client.html?map=' + urlMatch[1];
 
                 statusDiv.className = 'status success';
                 statusDiv.innerHTML = '<strong>✓ Success!</strong><br><br>' +
                     '<strong>Property:</strong> ' + landData.name + '<br>' +
                     '<strong>Polygons:</strong> ' + polygons.length + '<br><br>' +
                     '<div class="share-actions">' +
-                    '<button type="button" id="shareBtn" class="share-btn">📤 Share</button>' +
+                    '<button type="button" id="copyLinkBtn" class="share-btn">🔗 Copy link</button>' +
+                    '<button type="button" id="shareBtn" class="share-btn">📤 Share file</button>' +
                     '<a href="' + url + '" download="' + filename + '" class="download-link">📥 Download</a>' +
                     '</div>' +
-                    '<br><small style="color:#666;">Share opens Email, Messages, etc. on macOS.</small>';
+                    '<p style="margin-top:10px;font-size:0.85em;color:#666;">Share the link for iOS — it works on GitHub Pages.</p>' +
+                    '<small style="color:#666;" id="shareHint"></small>';
                 statusDiv.style.display = 'block';
 
+                var copyLinkBtn = document.getElementById('copyLinkBtn');
+                if (copyLinkBtn) {
+                    copyLinkBtn.onclick = function() {
+                        navigator.clipboard.writeText(shareableLink).then(function() {
+                            copyLinkBtn.textContent = '✓ Copied!';
+                            setTimeout(function() { copyLinkBtn.textContent = '🔗 Copy link'; }, 2000);
+                        });
+                    };
+                }
+
                 var shareBtn = document.getElementById('shareBtn');
-                if (shareBtn && navigator.share) {
+                var shareHint = document.getElementById('shareHint');
+                function doDownload() {
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                }
+                if (shareBtn) {
                     shareBtn.onclick = function() {
                         var shareData = {
                             title: landData.name + ' - Property Map',
                             text: 'Property map: ' + landData.name + (landData.state !== 'N/A' ? ' (' + landData.state + ')' : ''),
                             files: [file]
                         };
-                        if (navigator.canShare && navigator.canShare(shareData)) {
+                        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
                             navigator.share(shareData).then(function() {
                                 shareBtn.textContent = '✓ Shared';
                             }).catch(function(err) {
-                                if (err.name !== 'AbortError') {
-                                    window.open(url);
-                                }
+                                if (err.name !== 'AbortError') doDownload();
                             });
                         } else {
-                            window.open(url);
+                            doDownload();
+                            if (shareHint) shareHint.textContent = 'File saved — attach it in Mail or Messages to share.';
                         }
-                    };
-                } else if (shareBtn) {
-                    shareBtn.textContent = '📥 Download instead';
-                    shareBtn.onclick = function() {
-                        var a = document.createElement('a');
-                        a.href = url;
-                        a.download = filename;
-                        a.click();
                     };
                 }
 

@@ -1,6 +1,6 @@
 //
-//  PrincipalAcresApp.swift
-//  PrincipalAcres
+//  MeadowsHaleApp.swift
+//  Meadows-Hale
 //
 //  Created by mgraf on 11/25/25.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct PrincipalAcresApp: App {
+struct MeadowsHaleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
