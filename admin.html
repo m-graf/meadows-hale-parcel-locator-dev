@@ -165,7 +165,7 @@
             flex-wrap: wrap;
         }
 
-        .share-btn, .download-link {
+        .share-btn {
             display: inline-block;
             padding: 12px 24px;
             background: #667eea;
@@ -179,17 +179,9 @@
             font-family: inherit;
         }
 
-        .share-btn:hover, .download-link:hover {
+        .share-btn:hover {
             background: #5568d3;
             color: white;
-        }
-
-        .download-link {
-            background: #6c757d;
-        }
-
-        .download-link:hover {
-            background: #5a6268;
         }
 
         #loginForm .form-group:last-of-type { margin-bottom: 20px; }
@@ -235,7 +227,7 @@
             .status { padding: 12px; font-size: 0.9em; }
             .example { padding: 12px; font-size: 0.85em; }
             .share-actions { flex-direction: column; }
-            .share-btn, .download-link { display: block; text-align: center; }
+            .share-btn { display: block; text-align: center; }
             #logoutWrap { padding: 0 12px; margin-bottom: 8px; }
         }
     </style>
@@ -263,7 +255,7 @@
         <div id="logoutWrap"><a href="#" id="logoutLink">Log out</a></div>
         <div class="container">
         <h1>🌲 Meadows-Hale</h1>
-        <p class="subtitle">Admin Portal - Generate Standalone Property Map</p>
+        <p class="subtitle">Admin Portal - Get shareable client link</p>
 
         <form id="landForm">
             <div class="form-group">
@@ -282,7 +274,7 @@
             </div>
 
             <button type="submit" id="submitBtn">
-                Generate Standalone HTML File
+                Get shareable link
             </button>
         </form>
 
@@ -343,21 +335,6 @@
         var submitBtn = document.getElementById('submitBtn');
         var statusDiv = document.getElementById('status');
 
-        function humanizedFilename(data) {
-            var parts = [];
-            if (data.name) parts.push(data.name);
-            var addr = data.address || data.street_address || data.property_address || data.public_address || (data.city && (data.city + (data.state ? ', ' + data.state : '')));
-            if (addr) parts.push(addr);
-            else {
-                if (data.county) parts.push(data.county);
-                if (data.state && data.state !== 'N/A') parts.push(data.state);
-            }
-            var base = parts.length ? parts.join(' - ') : 'property';
-            base = base.replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
-            if (base.length > 60) base = base.slice(0, 57) + '...';
-            return (base || 'property') + '_map.html';
-        }
-
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -385,79 +362,51 @@
                 const polygons = data.geoJSON.filter(f => f.geometry && f.geometry.type === 'Polygon');
                 if (polygons.length === 0) throw new Error('No valid polygons found');
 
-                statusDiv.innerHTML = 'Generating HTML file...';
-
-                const templateResponse = await fetch('client.html');
-                const templateHtml = await templateResponse.text();
-
-                const landData = {
-                    name: data.name || 'Property',
-                    state: data.state || 'N/A',
-                    polygons: polygons.map(p => p.geometry.coordinates),
-                    creator: data.creator || null
-                };
-
-                const bundled = templateHtml.replace(
-                    'async function initMap() {',
-                    'window.LAND_DATA=' + JSON.stringify(landData) + ';async function initMap() {if(window.LAND_DATA){const landData=window.LAND_DATA;try{map=L.map("map").setView([39.8,-98.6],4);const s=mapStyles.streets;currentTileLayer=L.tileLayer(s.url,{attribution:s.attribution,maxZoom:s.maxZoom,subdomains:"abc"}).addTo(map);const ac=[];landData.polygons.forEach((pc,i)=>{const lc=pc[0].map(c=>[c[1],c[0]]);ac.push(...lc);L.polygon(lc,{color:"#4c5fd5",fillColor:"#667eea",fillOpacity:0.3,weight:3}).addTo(map).bindPopup("<strong>"+landData.name+"</strong><br>Polygon "+(i+1));});if(ac.length>0)map.fitBounds(L.latLngBounds(ac),{padding:[50,50]});document.getElementById("propertyName").textContent=landData.name;document.getElementById("propertyState").textContent=landData.state;document.getElementById("polygonCount").textContent=landData.polygons.length;if(landData.creator){document.getElementById("creatorInfo").style.display="block";document.getElementById("creatorName").textContent=landData.creator.full_name||"N/A";document.getElementById("creatorCompany").textContent=landData.creator.company||"N/A";document.getElementById("creatorPhone").textContent=landData.creator.formatted_phone||"N/A";}document.getElementById("infoPanel").style.display="block";initInfoPanelCollapse();getUserLocation();document.getElementById("loadingOverlay").classList.add("hidden");}catch(e){console.error(e);document.getElementById("loadingOverlay").innerHTML="<div class=\\"error-message\\"><h2>Error</h2><p>"+e.message+"</p></div>";}return;}'
-                );
-
-                var filename = humanizedFilename(data);
-
-                const blob = new Blob([bundled], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const file = new File([blob], filename, { type: 'text/html' });
+                var propertyName = data.name || 'Property';
+                var propertyState = data.state || 'N/A';
 
                 var baseUrl = window.location.origin + window.location.pathname.replace(/\/admin(\.html)?\/?$/, '').replace(/\/?$/, '/');
                 var shareableLink = baseUrl + 'client.html?map=' + urlMatch[1];
 
                 statusDiv.className = 'status success';
                 statusDiv.innerHTML = '<strong>✓ Success!</strong><br><br>' +
-                    '<strong>Property:</strong> ' + landData.name + '<br>' +
+                    '<strong>Property:</strong> ' + propertyName + '<br>' +
                     '<strong>Polygons:</strong> ' + polygons.length + '<br><br>' +
                     '<div class="share-actions">' +
                     '<button type="button" id="copyLinkBtn" class="share-btn">🔗 Copy link</button>' +
-                    '<button type="button" id="shareBtn" class="share-btn">📤 Share file</button>' +
-                    '<a href="' + url + '" download="' + filename + '" class="download-link">📥 Download</a>' +
+                    '<button type="button" id="shareBtn" class="share-btn">📤 Share link</button>' +
                     '</div>' +
-                    '<p style="margin-top:10px;font-size:0.85em;color:#666;">Share the link for iOS — it works on GitHub Pages.</p>' +
-                    '<small style="color:#666;" id="shareHint"></small>';
+                    '<small style="display:block;margin-top:10px;color:#666;" id="shareHint"></small>';
                 statusDiv.style.display = 'block';
 
-                var copyLinkBtn = document.getElementById('copyLinkBtn');
-                if (copyLinkBtn) {
-                    copyLinkBtn.onclick = function() {
-                        navigator.clipboard.writeText(shareableLink).then(function() {
-                            copyLinkBtn.textContent = '✓ Copied!';
-                            setTimeout(function() { copyLinkBtn.textContent = '🔗 Copy link'; }, 2000);
-                        });
-                    };
+                function copyLink() {
+                    navigator.clipboard.writeText(shareableLink).then(function() {
+                        var btn = document.getElementById('copyLinkBtn');
+                        if (btn) { btn.textContent = '✓ Copied!'; setTimeout(function() { btn.textContent = '🔗 Copy link'; }, 2000); }
+                    });
                 }
+
+                var copyLinkBtn = document.getElementById('copyLinkBtn');
+                if (copyLinkBtn) copyLinkBtn.onclick = copyLink;
 
                 var shareBtn = document.getElementById('shareBtn');
                 var shareHint = document.getElementById('shareHint');
-                function doDownload() {
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    a.click();
-                }
                 if (shareBtn) {
                     shareBtn.onclick = function() {
                         var shareData = {
-                            title: landData.name + ' - Property Map',
-                            text: 'Property map: ' + landData.name + (landData.state !== 'N/A' ? ' (' + landData.state + ')' : ''),
-                            files: [file]
+                            title: propertyName + ' - Property Map',
+                            text: 'Property map: ' + propertyName + (propertyState !== 'N/A' ? ' (' + propertyState + ')' : ''),
+                            url: shareableLink
                         };
                         if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
                             navigator.share(shareData).then(function() {
                                 shareBtn.textContent = '✓ Shared';
                             }).catch(function(err) {
-                                if (err.name !== 'AbortError') doDownload();
+                                if (err.name !== 'AbortError' && shareHint) shareHint.textContent = 'Share cancelled or failed.';
                             });
                         } else {
-                            doDownload();
-                            if (shareHint) shareHint.textContent = 'File saved — attach it in Mail or Messages to share.';
+                            copyLink();
+                            if (shareHint) shareHint.textContent = 'Link copied to clipboard — paste it in Mail or Messages to share.';
                         }
                     };
                 }
@@ -468,7 +417,7 @@
                 statusDiv.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Generate Standalone HTML File';
+                submitBtn.innerHTML = 'Get shareable link';
             }
         });
     </script>
