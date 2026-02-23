@@ -70,6 +70,16 @@ The app integrates with Land ID's public API:
 
 Simply open the HTML files in a modern web browser. No build process or server required!
 
+### Git hooks (after clone)
+
+The repo includes a pre-commit hook that bumps the patch version in `VERSION`, `admin.html`, and `client.html` on every commit. **Run once after cloning** so Git uses the repo's hooks:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+Or manually: `git config core.hooksPath .githooks`
+
 For testing with geolocation features, you may need to run a local server (due to browser security restrictions):
 
 ```bash

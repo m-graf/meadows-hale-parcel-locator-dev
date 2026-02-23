@@ -1,0 +1,29 @@
+#!/bin/sh
+# Bump patch version and update admin.html + client.html before each commit.
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+VERSION_FILE=VERSION
+current=$(cat "$VERSION_FILE" 2>/dev/null || echo "1.0.0")
+current=$(echo "$current" | tr -d '\n\r ')
+
+# Bump patch: 1.0.0 -> 1.0.1
+major=$(echo "$current" | cut -d. -f1)
+minor=$(echo "$current" | cut -d. -f2)
+patch=$(echo "$current" | cut -d. -f3)
+patch=$((patch + 1))
+newver="$major.$minor.$patch"
+
+echo "$newver" > "$VERSION_FILE"
+
+# Update APP_VERSION in both HTML files (macOS sed)
+if [ -f admin.html ]; then
+  sed -i '' "s/var APP_VERSION = '[^']*';/var APP_VERSION = '$newver';/" admin.html
+fi
+if [ -f client.html ]; then
+  sed -i '' "s/var APP_VERSION = '[^']*';/var APP_VERSION = '$newver';/" client.html
+fi
+
+git add "$VERSION_FILE" admin.html client.html 2>/dev/null || true
+exit 0
