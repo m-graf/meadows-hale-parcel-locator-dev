@@ -146,32 +146,52 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            max-width: 500px;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            max-width: 420px;
             text-align: center;
             z-index: 10000;
         }
 
+        .error-message .error-logo {
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            margin: 0 auto 20px;
+        }
+
         .error-message h2 {
-            color: #d9534f;
-            margin-bottom: 15px;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.4em;
         }
 
-        .error-message p {
+        .error-message .error-detail {
             color: #666;
-            margin-bottom: 20px;
+            font-size: 0.95em;
+            margin-bottom: 24px;
         }
 
-        .error-message a {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
+        .error-message .error-contact {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        .error-message .error-contact strong {
+            color: #333;
+        }
+
+        .error-message .error-contact a {
+            color: #667eea;
             text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
+        }
+
+        .error-message .error-contact a:hover {
+            text-decoration: underline;
         }
 
         .legend {
@@ -303,6 +323,10 @@
             transform: rotate(180deg);
         }
 
+        .style-switcher-close {
+            display: none;
+        }
+
         .style-options {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -366,12 +390,97 @@
             border-top: 1px solid #eee;
         }
 
-        /* Mobile: info panel left, Map Style top-right so both visible */
+        /* Mobile: Map Style as slide-in panel from the right */
+        .map-style-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .map-style-backdrop.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .map-style-trigger-mobile {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .map-style-trigger-mobile:active {
+            background: #f0f0f0;
+        }
+
         @media (max-width: 768px) {
+            .map-style-trigger-mobile {
+                display: block;
+            }
+
             .map-style-switcher {
-                top: 10px;
+                top: 0;
                 left: auto;
-                right: 10px;
+                right: 0;
+                width: 280px;
+                max-width: 85vw;
+                height: 100%;
+                border-radius: 0;
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+                transform: translateX(100%);
+                transition: transform 0.25s ease;
+                overflow-y: auto;
+            }
+
+            .map-style-switcher.panel-open {
+                transform: translateX(0);
+            }
+
+            .map-style-switcher .style-options {
+                max-height: none;
+                padding: 12px;
+            }
+
+            .map-style-switcher .style-options.open {
+                max-height: none;
+            }
+
+            .style-switcher-toggle {
+                display: none;
+            }
+
+            .style-switcher-close {
+                display: flex;
+                margin-left: auto;
+                width: 32px;
+                height: 32px;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 1.2em;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .style-switcher-close:hover {
+                background: rgba(255,255,255,0.3);
             }
 
             .info-panel {
@@ -379,7 +488,7 @@
                 left: 10px;
                 right: auto;
                 transform: none;
-                width: calc(100% - 150px);
+                width: calc(100% - 130px);
                 max-width: none;
             }
 
@@ -486,11 +595,15 @@
 
     <div id="map"></div>
 
+    <div class="map-style-backdrop" id="mapStyleBackdrop" aria-hidden="true"></div>
+    <button type="button" class="map-style-trigger-mobile" id="mapStyleTriggerMobile" aria-label="Open map style">🗺️ Map Style</button>
+
     <!-- Map Style Switcher -->
-    <div class="map-style-switcher">
-        <div class="style-switcher-header" onclick="toggleStyleSwitcher()">
+    <div class="map-style-switcher" id="mapStyleSwitcher">
+        <div class="style-switcher-header" id="styleSwitcherHeader">
             <span>🗺️ Map Style</span>
-            <span class="style-switcher-toggle" id="styleSwitcherToggle">▼</span>
+            <span class="style-switcher-toggle" id="styleSwitcherToggle" aria-hidden="true">▼</span>
+            <button type="button" class="style-switcher-close" id="styleSwitcherClose" aria-label="Close">×</button>
         </div>
         <div class="style-options" id="styleOptions">
             <button class="style-option active" data-style="streets" onclick="changeMapStyle('streets')">
@@ -629,6 +742,26 @@
             }
         };
 
+        function isMobileStylePanel() {
+            return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function openStylePanel() {
+            if (!isMobileStylePanel()) return;
+            document.getElementById('mapStyleSwitcher').classList.add('panel-open');
+            document.getElementById('mapStyleBackdrop').classList.add('visible');
+            document.getElementById('styleOptions').classList.add('open');
+            document.getElementById('mapStyleBackdrop').setAttribute('aria-hidden', 'false');
+        }
+
+        function closeStylePanel() {
+            if (!isMobileStylePanel()) return;
+            document.getElementById('mapStyleSwitcher').classList.remove('panel-open');
+            document.getElementById('mapStyleBackdrop').classList.remove('visible');
+            document.getElementById('styleOptions').classList.remove('open');
+            document.getElementById('mapStyleBackdrop').setAttribute('aria-hidden', 'true');
+        }
+
         function changeMapStyle(styleName) {
             if (!map || !mapStyles[styleName]) return;
             
@@ -644,12 +777,34 @@
             document.querySelectorAll('.style-option').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`[data-style="${styleName}"]`).classList.add('active');
             localStorage.setItem('preferredMapStyle', styleName);
+            if (isMobileStylePanel()) closeStylePanel();
         }
 
         function toggleStyleSwitcher() {
+            if (isMobileStylePanel()) {
+                closeStylePanel();
+                return;
+            }
             document.getElementById('styleOptions').classList.toggle('open');
             document.getElementById('styleSwitcherToggle').classList.toggle('open');
         }
+
+        (function initStylePanel() {
+            var trigger = document.getElementById('mapStyleTriggerMobile');
+            var backdrop = document.getElementById('mapStyleBackdrop');
+            var closeBtn = document.getElementById('styleSwitcherClose');
+            var header = document.getElementById('styleSwitcherHeader');
+            if (trigger) trigger.addEventListener('click', openStylePanel);
+            if (backdrop) backdrop.addEventListener('click', closeStylePanel);
+            if (closeBtn) closeBtn.addEventListener('click', closeStylePanel);
+            if (header) header.onclick = function() {
+                if (isMobileStylePanel()) closeStylePanel();
+                else {
+                    document.getElementById('styleOptions').classList.toggle('open');
+                    document.getElementById('styleSwitcherToggle').classList.toggle('open');
+                }
+            };
+        })();
 
         async function initMap() {
             try {
@@ -776,9 +931,14 @@
                 console.error('Error:', error);
                 document.getElementById('loadingOverlay').innerHTML = `
                     <div class="error-message">
-                        <h2>⚠️ Error Loading Property</h2>
-                        <p>${error.message}</p>
-                        <a href="admin.html">← Return to Admin</a>
+                        <img src="meadows-hale-logo.png" alt="Meadows-Hale" class="error-logo" />
+                        <h2>Whoops…</h2>
+                        <p class="error-detail">We couldn’t load that map. ${error.message}</p>
+                        <div class="error-contact">
+                            <strong>Need help?</strong><br>
+                            Contact: Julie G'Vitale<br>
+                            Phone: <a href="tel:+17068103581">706-810-3581</a>
+                        </div>
                     </div>
                 `;
             }
