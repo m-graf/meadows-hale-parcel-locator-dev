@@ -41,6 +41,26 @@
             z-index: 999;
         }
 
+        .beta-tag {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 999px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            z-index: 1001;
+            transition: background 0.2s, color 0.2s;
+        }
+        .beta-tag:hover {
+            background: #667eea;
+            color: white;
+        }
+
         .info-panel {
             position: absolute;
             top: 20px;
@@ -609,6 +629,7 @@
 
     <div id="map"></div>
 
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a>
     <img src="meadows-hale-logo.png" alt="Meadows-Hale" class="map-logo-watermark" />
 
     <div class="map-style-backdrop" id="mapStyleBackdrop" aria-hidden="true"></div>

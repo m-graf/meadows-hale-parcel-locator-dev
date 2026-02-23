@@ -49,6 +49,24 @@
             font-size: 0.95em;
         }
 
+        .beta-tag {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 10px;
+            font-size: 0.5em;
+            font-weight: 600;
+            vertical-align: middle;
+            text-decoration: none;
+            color: #667eea;
+            background: #e8ecff;
+            border-radius: 999px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .beta-tag:hover {
+            background: #667eea;
+            color: white;
+        }
+
         .form-group {
             margin-bottom: 25px;
         }
@@ -235,7 +253,7 @@
 <body>
     <!-- Auth: only hashes are stored. Replace AUTH in the script with your own salt + SHA-256(salt+username) and SHA-256(salt+password) for production. -->
     <div id="loginForm" class="container">
-        <h1>🌲 Meadows-Hale</h1>
+        <h1>🌲 Meadows-Hale <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
         <p class="subtitle">Admin – sign in</p>
         <form id="authForm">
             <div class="form-group">
@@ -254,7 +272,7 @@
     <div id="adminContent" style="display: none;">
         <div id="logoutWrap"><a href="#" id="logoutLink">Log out</a></div>
         <div class="container">
-        <h1>🌲 Meadows-Hale</h1>
+        <h1>🌲 Meadows-Hale <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="beta-tag">Beta</a></h1>
         <p class="subtitle">Admin Portal - Get shareable client link</p>
 
         <form id="landForm">
