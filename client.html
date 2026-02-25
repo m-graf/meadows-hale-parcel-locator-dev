@@ -760,12 +760,46 @@
 
     <script>
         (function() {
-            var APP_VERSION = '1.0.6';
+            // Bootleg analytics: Meadows Hale Parcel Locator Analytics form (event, page, user, extra).
+            window.ANALYTICS = {
+                enabled: true,
+                formAction: 'https://docs.google.com/forms/d/e/1FAIpQLSfaul99ZR6UWw2TCZAhKlg0pDIXd1saLTpz0pVzV3u29SflKA/formResponse',
+                entryIds: { event: '746814572', page: '476501142', user: '1614200879', extra: '607616897' },
+                url: ''
+            };
+            window.logEvent = function(eventName, page, user, extra) {
+                if (!window.ANALYTICS || !window.ANALYTICS.enabled) return;
+                user = user || '';
+                extra = extra || '';
+                var q = 'e=' + encodeURIComponent(eventName) + '&p=' + encodeURIComponent(page) + '&u=' + encodeURIComponent(user);
+                if (extra) q += '&x=' + encodeURIComponent(extra);
+                var url;
+                if (window.ANALYTICS.formAction && window.ANALYTICS.entryIds && window.ANALYTICS.entryIds.event) {
+                    url = window.ANALYTICS.formAction + (window.ANALYTICS.formAction.indexOf('?') >= 0 ? '&' : '?') +
+                        'entry.' + window.ANALYTICS.entryIds.event + '=' + encodeURIComponent(eventName) +
+                        '&entry.' + window.ANALYTICS.entryIds.page + '=' + encodeURIComponent(page) +
+                        '&entry.' + window.ANALYTICS.entryIds.user + '=' + encodeURIComponent(user) +
+                        (extra ? ('&entry.' + window.ANALYTICS.entryIds.extra + '=' + encodeURIComponent(extra)) : '');
+                } else if (window.ANALYTICS.url) {
+                    url = window.ANALYTICS.url + (window.ANALYTICS.url.indexOf('?') >= 0 ? '&' : '?') + q;
+                } else return;
+                var img = new Image();
+                img.src = url;
+            };
+        })();
+        (function() {
+            var APP_VERSION = '1.0.7';
             var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
             var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
             var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
             var el = document.querySelector('.beta-tag');
-            if (el) el.href = feedbackUrl;
+            if (el) {
+                el.href = feedbackUrl;
+                el.addEventListener('click', function() {
+                    var extra = (document.getElementById('propertyName') && document.getElementById('propertyName').textContent) || '';
+                    if (window.logEvent) window.logEvent('beta_click', 'client', '', extra);
+                });
+            }
         })();
         (function() {
             var legend = document.getElementById('legendBox');
@@ -888,8 +922,10 @@
         })();
 
         async function initMap() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var contactParam = urlParams.get('contact');
+            var phoneParam = urlParams.get('phone');
             try {
-                const urlParams = new URLSearchParams(window.location.search);
                 const mapId = urlParams.get('map');
 
                 let landData = null;
@@ -1000,6 +1036,7 @@
                     locateLink.onclick = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (window.logEvent) window.logEvent('locate_link', 'client', '', landData.name || '');
                         var bounds = L.latLngBounds();
                         polygonLayers.forEach(function(layer) { bounds.extend(layer.getBounds()); });
                         map.fitBounds(bounds, { padding: [50, 50] });
@@ -1008,19 +1045,23 @@
 
                 if (landData.creator) {
                     document.getElementById('creatorInfo').style.display = 'block';
-                    document.getElementById('creatorName').textContent = landData.creator.full_name || 'N/A';
+                    document.getElementById('creatorName').textContent = contactParam || landData.creator.full_name || 'N/A';
                     document.getElementById('creatorCompany').textContent = landData.creator.company || 'N/A';
-                    document.getElementById('creatorPhone').textContent = landData.creator.formatted_phone || 'N/A';
+                    document.getElementById('creatorPhone').textContent = phoneParam || landData.creator.formatted_phone || 'N/A';
                 }
 
                 document.getElementById('infoPanel').style.display = 'block';
                 initInfoPanelCollapse();
 
+                if (window.logEvent) window.logEvent('map_view', 'client', '', landData.name || '');
                 getUserLocation();
                 document.getElementById('loadingOverlay').classList.add('hidden');
 
             } catch (error) {
                 console.error('Error:', error);
+                var errContact = contactParam || "Julie G'Vitale";
+                var errPhone = phoneParam || '706-810-3581';
+                var errPhoneTel = errPhone.replace(/\D/g, '');
                 document.getElementById('loadingOverlay').innerHTML = `
                     <div class="error-message">
                         <img src="meadows-hale-logo.png" alt="Meadows-Hale" class="error-logo" />
@@ -1028,8 +1069,8 @@
                         <p class="error-detail">We couldn’t load that map. ${error.message}</p>
                         <div class="error-contact">
                             <strong>Need help?</strong><br>
-                            Contact: Julie G'Vitale<br>
-                            Phone: <a href="tel:+17068103581">706-810-3581</a>
+                            Contact: ${errContact}<br>
+                            Phone: <a href="tel:+${errPhoneTel}">${errPhone}</a>
                         </div>
                     </div>
                 `;
@@ -1106,6 +1147,7 @@
         }
 
         function centerOnUserLocation() {
+            if (window.logEvent) window.logEvent('my_location', 'client', '', (document.getElementById('propertyName') && document.getElementById('propertyName').textContent) || '');
             if (userLocation) {
                 map.setView(userLocation, 15);
                 if (userMarker) userMarker.openPopup();
@@ -1114,7 +1156,10 @@
             }
         }
 
-        window.addEventListener('load', initMap);
+        window.addEventListener('load', function() {
+            if (window.logEvent) window.logEvent('pageview', 'client', '', '');
+            initMap();
+        });
     </script>
 </body>
 </html>

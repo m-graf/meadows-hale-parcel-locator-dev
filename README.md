@@ -107,6 +107,24 @@ https://id.land/maps/db72d71ef72e192c30e66256e0cf6fc5/share
 
 This example shows the "Sugar Shack" property in Vermont.
 
+## Analytics (optional, bootleg)
+
+Events are sent only if you turn them on. No third-party service by default.
+
+**Option A – Google Form (free):**
+
+1. Create a [Google Form](https://forms.google.com) with four short-answer questions: **event**, **page**, **user**, **extra**.
+2. Open the form → ⋮ → **Get pre-filled link**. Fill one response and get the link; the query string will have `entry.XXXXX=...`. Note the four entry IDs.
+3. In `admin.html` and `client.html`, set at the top of the analytics block:
+   - `ANALYTICS.enabled = true`
+   - `ANALYTICS.formAction = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse'`
+   - `ANALYTICS.entryIds = { event: 'ID1', page: 'ID2', user: 'ID3', extra: 'ID4' }`
+4. Each event will show up as a new form response (and in the linked Google Sheet).
+
+**Option B – Any GET endpoint:** Set `ANALYTICS.enabled = true` and `ANALYTICS.url = 'https://yoursite.com/log'`. Events send query params: `e`, `p`, `u`, `x`.
+
+**Events:** `pageview` (admin/client; user = db user on admin, blank on client), `share_link_click`, `share_link_success` (property name in extra), `map_view` (property name in extra), `my_location`, `locate_link` (property name in extra), `beta_click` (admin: user in user column; client: property name in extra).
+
 ## License
 
 This project is open source and available for use.

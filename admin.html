@@ -176,6 +176,27 @@
             100% { transform: rotate(360deg); }
         }
 
+        #moneyRain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .money-drop {
+            position: absolute;
+            top: -50px;
+            font-size: 28px;
+            opacity: 0.9;
+            animation: moneyFall linear forwards;
+        }
+        @keyframes moneyFall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+
         .share-actions {
             margin-top: 15px;
             display: flex;
@@ -302,17 +323,51 @@
 
     <script>
         (function() {
-            var APP_VERSION = '1.0.6';
+            // Bootleg analytics: Meadows Hale Parcel Locator Analytics form (event, page, user, extra).
+            window.ANALYTICS = {
+                enabled: true,
+                formAction: 'https://docs.google.com/forms/d/e/1FAIpQLSfaul99ZR6UWw2TCZAhKlg0pDIXd1saLTpz0pVzV3u29SflKA/formResponse',
+                entryIds: { event: '746814572', page: '476501142', user: '1614200879', extra: '607616897' }
+            };
+            window.logEvent = function(eventName, page, user, extra) {
+                if (!window.ANALYTICS || !window.ANALYTICS.enabled) return;
+                user = user || '';
+                extra = extra || '';
+                var q = 'e=' + encodeURIComponent(eventName) + '&p=' + encodeURIComponent(page) + '&u=' + encodeURIComponent(user);
+                if (extra) q += '&x=' + encodeURIComponent(extra);
+                var url;
+                if (window.ANALYTICS.formAction && window.ANALYTICS.entryIds && window.ANALYTICS.entryIds.event) {
+                    url = window.ANALYTICS.formAction + (window.ANALYTICS.formAction.indexOf('?') >= 0 ? '&' : '?') +
+                        'entry.' + window.ANALYTICS.entryIds.event + '=' + encodeURIComponent(eventName) +
+                        '&entry.' + window.ANALYTICS.entryIds.page + '=' + encodeURIComponent(page) +
+                        '&entry.' + window.ANALYTICS.entryIds.user + '=' + encodeURIComponent(user) +
+                        (extra ? ('&entry.' + window.ANALYTICS.entryIds.extra + '=' + encodeURIComponent(extra)) : '');
+                } else if (window.ANALYTICS.url) {
+                    url = window.ANALYTICS.url + (window.ANALYTICS.url.indexOf('?') >= 0 ? '&' : '?') + q;
+                } else return;
+                var img = new Image();
+                img.src = url;
+            };
+        })();
+        (function() {
+            var APP_VERSION = '1.0.7';
             var FEEDBACK_VERSION_ENTRY_ID = '1369032985';
             var feedbackBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeZ2qftB2jO16KWfD_ODNTtQn-Nv80IkU3GxVPgAuZIpFGb8A/viewform?usp=pp_url';
             var feedbackUrl = feedbackBase + (FEEDBACK_VERSION_ENTRY_ID ? ('&entry.' + FEEDBACK_VERSION_ENTRY_ID + '=' + encodeURIComponent(APP_VERSION)) : '');
-            document.querySelectorAll('.beta-tag').forEach(function(a) { a.href = feedbackUrl; });
+            document.querySelectorAll('.beta-tag').forEach(function(a) {
+                a.href = feedbackUrl;
+                a.addEventListener('click', function() {
+                    if (window.logEvent) window.logEvent('beta_click', 'admin', sessionStorage.getItem('admin_user') || '', '');
+                });
+            });
         })();
         (function() {
             var AUTH = {
                 salt: '9c642f0a-4071-4790-8ef2-a680cfe930d6',
-                userHash: '03416b6d64e3ff7a5a9b597e1643f2a3a23132ba2af056d3768f4a5b99733985',
-                passHash: '5e5e43d6d2a77dfc8b624fc7b7745bdbb6bedcbff5e325998ac148ac6e5ec3d0'
+                users: [
+                    { userHash: '03416b6d64e3ff7a5a9b597e1643f2a3a23132ba2af056d3768f4a5b99733985', passHash: '5e5e43d6d2a77dfc8b624fc7b7745bdbb6bedcbff5e325998ac148ac6e5ec3d0', phoneOverride: null, contactOverride: null },
+                    { userHash: '62bc3612f06c5b03ab85652d03a3b95994de319570e4ee02f1ab6b9d643ff8b1', passHash: '7c095452bf6285b8d80424be636cf086d6a82ad374a78e5fc73dfac2dbbfe684', phoneOverride: '334-614-0116', contactOverride: 'Mycah Ortiz' }
+                ]
             };
             function bufToHex(buf) {
                 return Array.from(new Uint8Array(buf)).map(function(b) { return ('0' + b.toString(16)).slice(-2); }).join('');
@@ -321,17 +376,31 @@
                 return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function(buf) { return bufToHex(buf); });
             }
             function checkAuth() {
-                if (sessionStorage.getItem('admin_authenticated') === '1') {
+                var who = sessionStorage.getItem('admin_user');
+                if (who) {
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('adminContent').style.display = 'block';
-                    return true;
+                    return who;
                 }
-                return false;
+                if (sessionStorage.getItem('admin_authenticated') === '1') {
+                    sessionStorage.removeItem('admin_authenticated');
+                    sessionStorage.setItem('admin_user', 'julie');
+                    sessionStorage.setItem('admin_phone_override', '');
+                    sessionStorage.setItem('admin_contact_override', '');
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'block';
+                    return 'julie';
+                }
+                return null;
             }
-            if (checkAuth()) {
+            var currentUser = checkAuth();
+            if (currentUser) {
+                if (window.logEvent) window.logEvent('pageview', 'admin', currentUser, '');
                 document.getElementById('logoutLink').onclick = function(e) {
                     e.preventDefault();
-                    sessionStorage.removeItem('admin_authenticated');
+                    sessionStorage.removeItem('admin_user');
+                    sessionStorage.removeItem('admin_phone_override');
+                    sessionStorage.removeItem('admin_contact_override');
                     location.reload();
                 };
             } else {
@@ -344,8 +413,11 @@
                     try {
                         var uHash = await sha256Hex(AUTH.salt + user);
                         var pHash = await sha256Hex(AUTH.salt + pass);
-                        if (uHash === AUTH.userHash && pHash === AUTH.passHash) {
-                            sessionStorage.setItem('admin_authenticated', '1');
+                        var matched = AUTH.users.find(function(u) { return u.userHash === uHash && u.passHash === pHash; });
+                        if (matched) {
+                            sessionStorage.setItem('admin_user', user);
+                            sessionStorage.setItem('admin_phone_override', matched.phoneOverride || '');
+                            sessionStorage.setItem('admin_contact_override', matched.contactOverride || '');
                             location.reload();
                         } else {
                             errEl.classList.add('visible');
@@ -360,9 +432,37 @@
         var submitBtn = document.getElementById('submitBtn');
         var statusDiv = document.getElementById('status');
 
+        function startMoneyRain() {
+            var symbols = ['$', '💰', '💵'];
+            var wrap = document.getElementById('moneyRain');
+            if (wrap) wrap.remove();
+            wrap = document.createElement('div');
+            wrap.id = 'moneyRain';
+            document.body.appendChild(wrap);
+            for (var i = 0; i < 45; i++) {
+                (function() {
+                    var el = document.createElement('span');
+                    el.className = 'money-drop';
+                    el.textContent = symbols[i % symbols.length];
+                    el.style.left = Math.random() * 100 + '%';
+                    el.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+                    el.style.animationDelay = (Math.random() * 0.5) + 's';
+                    wrap.appendChild(el);
+                    setTimeout(function() {
+                        if (el.parentNode) el.parentNode.removeChild(el);
+                    }, 5500);
+                })();
+            }
+            setTimeout(function() {
+                if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+            }, 6000);
+        }
+
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+            if (window.logEvent) window.logEvent('share_link_click', 'admin', sessionStorage.getItem('admin_user') || '', '');
+            startMoneyRain();
+
             var landUrl = document.getElementById('landUrl').value.trim();
 
             submitBtn.disabled = true;
@@ -392,11 +492,18 @@
 
                 var baseUrl = window.location.origin + window.location.pathname.replace(/\/admin(\.html)?\/?$/, '').replace(/\/?$/, '/');
                 var shareableLink = baseUrl + 'client.html?map=' + urlMatch[1];
+                var phoneOverride = sessionStorage.getItem('admin_phone_override');
+                if (phoneOverride) shareableLink += '&phone=' + encodeURIComponent(phoneOverride);
+                var contactOverride = sessionStorage.getItem('admin_contact_override');
+                if (contactOverride) shareableLink += '&contact=' + encodeURIComponent(contactOverride);
 
+                if (window.logEvent) window.logEvent('share_link_success', 'admin', sessionStorage.getItem('admin_user') || '', propertyName);
                 statusDiv.className = 'status success';
                 statusDiv.innerHTML = '<strong>✓ Success!</strong><br><br>' +
                     '<strong>Property:</strong> ' + propertyName + '<br>' +
                     '<strong>Polygons:</strong> ' + polygons.length + '<br><br>' +
+                    '<strong>Shareable link:</strong><br>' +
+                    '<a href="' + shareableLink.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" id="shareableLinkDisplay" target="_blank" rel="noopener" style="word-break:break-all;color:#667eea;">' + shareableLink + '</a><br><br>' +
                     '<div class="share-actions">' +
                     '<button type="button" id="copyLinkBtn" class="share-btn">🔗 Copy link</button>' +
                     '<button type="button" id="shareBtn" class="share-btn">📤 Share link</button>' +
